@@ -9,10 +9,12 @@ using System.Threading;
 using System.Globalization;
 using System.Data.SqlClient;
 using System.Data;
+using System.Web.Script.Serialization;
+using System.Diagnostics;
 
 namespace BasePrint
 {
-    public class TadbirPrint : System.Activities.CodeActivity<String> , ITadbirPrint
+    public class TadbirPrint : System.Activities.CodeActivity<FileStream> , ITadbirPrint
     {
         CodepageConvertor _codepageService = new CodepageConvertor();
 
@@ -26,12 +28,13 @@ namespace BasePrint
 
         public InArgument<string> ReportName { get; set; }
 
-        public InArgument<string[]> ParamTypes { get; set; }
+        public InArgument<string> ParamTypes { get; set; }
     
-        public InArgument<string[]> ParamValues { get; set; }
+        public InArgument<string> ParamValues { get; set; }
 
-        protected override String Execute(CodeActivityContext context)
+        protected override FileStream Execute(CodeActivityContext context)
         {
+            FileStream fs = null;
             try
             {
                 int userId = UserId.Get<int>(context);
@@ -39,17 +42,34 @@ namespace BasePrint
                 int fpid = FPId.Get<int>(context);
                 int subsystemId = SubsystemId.Get<int>(context);
                 string reportName = ReportName.Get<string>(context);
-                string[] paramTypes = ParamTypes.Get<string[]>(context);
-                string[] paramValues = ParamValues.Get<string[]>(context);
+                string[] paramTypes = new JavaScriptSerializer().Deserialize<string[]>(ParamTypes.Get<string>(context));
+                string[] paramValues = new JavaScriptSerializer().Deserialize<string[]>(ParamValues.Get<string>(context));
                 string exceptionStr;
 
-                PrintReport(userId, workspaceId, fpid, subsystemId, reportName, paramTypes, paramValues, out exceptionStr);
+                string outputFileName = PrintReport(userId, workspaceId, fpid, subsystemId, reportName, paramTypes, paramValues, out exceptionStr);
+
+                if (outputFileName == null)
+                    return fs;
+                //return BadRequest(exceptionStr);
+                try
+                {
+                    return new FileStream(outputFileName, FileMode.Open);
+                    //File file = new File(fs, "application/pdf");
+                    //return fs;
+                }
+                catch (Exception exp)
+                {
+                    return fs;
+                    //return BadRequest(exp.ToString());
+                }
             }
             catch (Exception ex)
             {
+                EventLog.WriteEntry("BasePrint.TadbirPrint", ex.Message);
+                return fs;
                 throw ex;
             }
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public string PrintReport(int userId, int workspaceId, int fpId, int subsystemId, string reportName, string[] paramTypes, string[] paramValues, out string exceptionStr)
@@ -61,11 +81,11 @@ namespace BasePrint
                 return null;
             }
 
-            /*if (paramTypes.Length != paramValues.Length)
+            if (paramTypes.Length != paramValues.Length)
             {
                 exceptionStr = $"paramValues count ({paramValues.Length}) <> paramTypes count ({paramTypes.Length})";
                 return null;
-            }*/
+            }
 
             try
             {

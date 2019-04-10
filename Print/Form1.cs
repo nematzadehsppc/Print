@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Activities;
+using System.Web.Script.Serialization;
+using System.IO;
 
 namespace Print
 {
@@ -23,14 +25,14 @@ namespace Print
             BasePrint.TadbirPrint tadbirPrint = new BasePrint.TadbirPrint();
 
             tadbirPrint.UserId = new InArgument<int>(1);
-            tadbirPrint.WorkspaceId = new InArgument<int>(3);
-            tadbirPrint.FPId = new InArgument<int>(1);
-            tadbirPrint.SubsystemId = new InArgument<int>(4);
-            tadbirPrint.ReportName = new InArgument<string>("");
-            tadbirPrint.ParamTypes = new InArgument<string[]>();
-            tadbirPrint.ParamValues = new InArgument<string[]>();
+            tadbirPrint.WorkspaceId = new InArgument<int>(1);
+            tadbirPrint.FPId = new InArgument<int>(2);
+            tadbirPrint.SubsystemId = new InArgument<int>(5);
+            tadbirPrint.ReportName = new InArgument<string>("پیش فاکتور فروش");
+            tadbirPrint.ParamTypes = new InArgument<string>(new JavaScriptSerializer().Serialize(new String[] { "NUM", "NUM", "NUM" }));
+            tadbirPrint.ParamValues = new InArgument<string>(new JavaScriptSerializer().Serialize(new String[] { "0", "0", "0" }));
 
-            System.Activities.WorkflowInvoker.Invoke<String>(tadbirPrint);
+            System.Activities.WorkflowInvoker.Invoke<FileStream>(tadbirPrint);
         }
     }
 }
