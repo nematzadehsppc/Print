@@ -14,7 +14,7 @@ using System.Diagnostics;
 
 namespace BasePrint
 {
-    public class TadbirPrint : System.Activities.CodeActivity<FileStream> , ITadbirPrint
+    public class TadbirPrint : CodeActivity<string> , ITadbirPrint
     {
         CodepageConvertor _codepageService = new CodepageConvertor();
 
@@ -32,7 +32,7 @@ namespace BasePrint
     
         public InArgument<string> ParamValues { get; set; }
 
-        protected override FileStream Execute(CodeActivityContext context)
+        protected override string Execute(CodeActivityContext context)
         {
             FileStream fs = null;
             try
@@ -49,24 +49,26 @@ namespace BasePrint
                 string outputFileName = PrintReport(userId, workspaceId, fpid, subsystemId, reportName, paramTypes, paramValues, out exceptionStr);
 
                 if (outputFileName == null)
-                    return fs;
+                    return null;
                 //return BadRequest(exceptionStr);
                 try
                 {
-                    return new FileStream(outputFileName, FileMode.Open);
+                    return Encoding.UTF8.GetString(File.ReadAllBytes(outputFileName));
+
+                    //return new FileStream(outputFileName, FileMode.Open);
                     //File file = new File(fs, "application/pdf");
                     //return fs;
                 }
-                catch (Exception exp)
+                catch (Exception)
                 {
-                    return fs;
+                    return null;
                     //return BadRequest(exp.ToString());
                 }
             }
             catch (Exception ex)
             {
                 EventLog.WriteEntry("BasePrint.TadbirPrint", ex.Message);
-                return fs;
+                return null;
                 throw ex;
             }
             //throw new NotImplementedException();
