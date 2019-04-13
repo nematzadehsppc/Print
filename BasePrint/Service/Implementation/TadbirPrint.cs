@@ -53,7 +53,8 @@ namespace BasePrint
                 //return BadRequest(exceptionStr);
                 try
                 {
-                    return Encoding.UTF8.GetString(File.ReadAllBytes(outputFileName));
+                    //return Encoding.UTF8.GetString(File.ReadAllBytes(outputFileName));
+                    return Convert.ToBase64String(File.ReadAllBytes(outputFileName));
 
                     //return new FileStream(outputFileName, FileMode.Open);
                     //File file = new File(fs, "application/pdf");
